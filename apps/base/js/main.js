@@ -80,6 +80,27 @@ class MyView extends View {
 	initialize(mvc) {
 		super.initialize(mvc);
 
+
+
+		//signup form
+		this.conform =document.createElement("form");
+		this.conform.setAttribute('method',"post");
+		this.conform.setAttribute('action',"");
+		this.stage.appendChild(this.conform);
+
+		//input du form
+		let i = document.createElement("input"); //input element, text
+		i.setAttribute('type',"text");
+		i.setAttribute('name',"username");
+
+		//bouton du form
+		let s = document.createElement("input"); //input element, Submit button
+		s.setAttribute('type',"submit");
+		s.setAttribute('value',"Play");
+
+		this.conform.appendChild(i);
+		this.conform.appendChild(s);
+
 		// create get test btn
 		this.btn = document.createElement("button");
 		this.btn.innerHTML = "get test";
@@ -118,6 +139,9 @@ class MyView extends View {
 
 		this.ioBtnHandler = e => this.ioBtnClick(e);
 		this.iobtn.addEventListener("click", this.ioBtnHandler);
+
+		this.formBtnHandler = e => this.formClick(e);
+		this.conform.addEventListener("click", this.formBtnHandler)
 	}
 
 	removeListeners() {
@@ -127,6 +151,10 @@ class MyView extends View {
 
 	btnClick(event) {
 		this.mvc.controller.btnWasClicked("more parameters"); // dispatch
+	}
+
+	formClick(event){
+		this.mvc.controller.formBtnWasClicked("input parameters"); 
 	}
 
 	ioBtnClick(event) {
@@ -166,6 +194,13 @@ class MyController extends Controller {
 	async btnWasClicked(params) {
 		trace("btn click", params);
 		this.mvc.view.update(await this.mvc.model.data()); // wait async request > response from server and update view table values
+	}
+
+	async formBtnWasClicked(params) {
+		trace("form click",params);
+
+
+
 	}
 
 	async ioBtnWasClicked(params) {
