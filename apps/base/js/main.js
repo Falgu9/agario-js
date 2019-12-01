@@ -88,7 +88,7 @@ class MyView extends View {
 		this.conform.setAttribute('action',"");
 		this.stage.appendChild(this.conform);
 
-		//input du form
+		//input du formulaire
 		let i = document.createElement("input"); //input element, text
 		i.setAttribute('type',"text");
 		i.setAttribute('name',"username");
