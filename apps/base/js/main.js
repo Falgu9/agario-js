@@ -36,8 +36,8 @@ class Base {
 	 */
 	onIOConnect() {
 		trace("yay IO connected");
-		this.io.on("dummy", packet => this.onDummyData(packet)); // listen to "dummy" messages
-		this.io.emit("dummy", {value: "dummy data from client"}) // send test message
+		this.io.emit("con", {value: "positions_futures"}); // send test message
+		this.io.on("con_re", packet => this.onConnectData(packet)); // listen to "dummy" messages
 	}
 
 	/**
@@ -46,7 +46,16 @@ class Base {
 	 */
 	onDummyData(data) {
 		trace("IO data", data);
-		this.mvc.controller.ioDummy(data); // send it to controller
+		//this.mvc.controller.ioDummy(data); // send it to controller
+	}
+
+	/**
+	 * @method onConnectData : dummy data received from io server
+	 * @param {Object} data 
+	 */
+	onConnectData(data) {
+		trace("connection datas");
+		//this.mvc.controller.ioStartGame(data); // send it to controller
 	}
 }
 
@@ -61,10 +70,10 @@ class MyModel extends Model {
 
 	}
 
-	async data() {
-		trace("get data");
+	async connect(params) {
+		trace("asking to connect");
 		// keep data in class variable ? refresh rate ?
-		let result = await Comm.get("data"); // wait data from server
+		let result = await Comm.get("hello/"+params); // wait data from server
 		return result.response; // return it to controller
 	}
 
@@ -74,51 +83,23 @@ class MyView extends View {
 
 	constructor() {
 		super();
-		this.table = null;
 	}
 
 	initialize(mvc) {
 		super.initialize(mvc);
 
-
-
-		//signup form
-		this.conform =document.createElement("form");
-		this.conform.setAttribute('method',"post");
-		this.conform.setAttribute('action',"");
-		this.stage.appendChild(this.conform);
-
-		//input du formulaire
-		let i = document.createElement("input"); //input element, text
-		i.setAttribute('type',"text");
-		i.setAttribute('name',"username");
-
-		//bouton du form
-		let s = document.createElement("input"); //input element, Submit button
-		s.setAttribute('type',"submit");
-		s.setAttribute('value',"Play");
-
-		this.conform.appendChild(i);
-		this.conform.appendChild(s);
+		//create input for nickname
+		this.txt= document.createElement("input");
+		this.txt.setAttribute("type", "text");
+		this.txt.setAttribute("id" , "txt");
+		this.stage.appendChild(this.txt);
 
 		// create get test btn
 		this.btn = document.createElement("button");
-		this.btn.innerHTML = "get test";
+		this.btn.setAttribute("id","btn");
+		this.btn.setAttribute("type", "button");
+		this.btn.setAttribute("value", "Play");
 		this.stage.appendChild(this.btn);
-
-		// create io test btn
-		this.iobtn = document.createElement("button");
-		this.iobtn.innerHTML = "io test";
-		this.stage.appendChild(this.iobtn);
-
-		// io random value display
-		this.iovalue = document.createElement("div");
-		this.iovalue.innerHTML = "no value";
-		this.stage.appendChild(this.iovalue);
-
-		// get dataset display
-		this.table = document.createElement("table");
-		this.stage.appendChild(this.table);
 	}
 
 	// activate UI
@@ -136,52 +117,43 @@ class MyView extends View {
 	addListeners() {
 		this.getBtnHandler = e => this.btnClick(e);
 		this.btn.addEventListener("click", this.getBtnHandler);
-
-		this.ioBtnHandler = e => this.ioBtnClick(e);
-		this.iobtn.addEventListener("click", this.ioBtnHandler);
-
-		this.formBtnHandler = e => this.formClick(e);
-		this.conform.addEventListener("click", this.formBtnHandler)
 	}
 
 	removeListeners() {
 		this.btn.removeEventListener("click", this.getBtnHandler);
-		this.iobtn.removeEventListener("click", this.ioBtnHandler);
 	}
 
 	btnClick(event) {
-		this.mvc.controller.btnWasClicked("more parameters"); // dispatch
+		let text = this.txt.value;
+		if(text!=null){
+			this.mvc.controller.btnWasClicked(text); 
+		}else{
+			trace("nickname is non valid!");
+		} // dispatch
 	}
 
-	formClick(event){
-		this.mvc.controller.formBtnWasClicked("input parameters"); 
+	prepareStage(){
+
+		 while (this.stage.firstChild) {
+    		this.stage.removeChild(this.stage.firstChild);
+  		}
 	}
 
-	ioBtnClick(event) {
-		this.mvc.controller.ioBtnWasClicked("io parameters"); // dispatch
-	}
+	setGameStage(data){
 
-	update(data) {
-		while(this.table.firstChild) this.table.removeChild(this.table.firstChild); // empty table
-		data.forEach(el => { // loop data
-			let line = document.createElement("tr"); // create line
-			Object.keys(el).forEach(key => { // loop object keys
-				let cell = document.createElement("td"); // create cell
-				cell.innerHTML = el[key]; // display
-				line.appendChild(cell); // add cell
-			});
-			this.table.appendChild(line); // add line
-		});
-	}
+		trace(data);
+		this.txt= document.createElement("input");
+		this.txt.setAttribute("type", "text");
+		this.txt.setAttribute("value" , data);
+		this.stage.appendChild(this.txt);
 
-	updateIO(value) {
-		this.iovalue.innerHTML = value.toString(); // update io display
 	}
 
 }
 
 class MyController extends Controller {
 
+	id;
 	constructor() {
 		super();
 	}
@@ -192,24 +164,15 @@ class MyController extends Controller {
 	}
 
 	async btnWasClicked(params) {
-		trace("btn click", params);
-		this.mvc.view.update(await this.mvc.model.data()); // wait async request > response from server and update view table values
+		trace("connection requested", params);
+		this.mvc.view.prepareStage(); 
+		await this.mvc.model.connect(params)// wait async request > response from server and update view table values
 	}
 
-	async formBtnWasClicked(params) {
-		trace("form click",params);
-
-
-
-	}
-
-	async ioBtnWasClicked(params) {
-		trace("io btn click", params);
-		this.mvc.app.io.emit("dummy", {message: "dummy io click"}); // send socket.io packet
-	}
-
-	ioDummy(data) {
-		this.mvc.view.updateIO(data.value); // io dummy data received from main app
+	ioStartGame(data){
+		trace(data);
+		//this.
+		this.mvc.view.setGameStage(data);
 	}
 
 }
