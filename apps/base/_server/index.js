@@ -8,28 +8,16 @@ class Base extends ModuleBase {
 	}
 
 	/**
-	 * @method hello : world
-	 * @param {*} req 
-	 * @param {*} res 
-	 * @param  {...*} params : some arguments
-	 */
-	hello(req, res, ... params) {
-		let answer = ["hello", ...params, "!"].join(" "); // say hello
-		trace("answer"); // say it
-		this.sendJSON(req, res, 200, {message: answer}); // answer JSON
-	}
-
-	/**
 	 * @method connect : world
 	 * @param {*} req 
 	 * @param {*} res 
 	 * @param  {...*} params : some arguments
 	 */
-	connect(req, res, ... params) {
+	/*connect(req, res, ... params) {
 		let answer = ["hello", ...params, "!"].join(" "); // say hello
 		trace(answer); // say it
 		this.sendJSON(req, res, 200, {message: answer}); // answer JSON
-	}
+	}*/
 
 
 	/**
@@ -38,15 +26,40 @@ class Base extends ModuleBase {
 	 */
 	_onIOConnect(socket) {
 		super._onIOConnect(socket); // do not remove super call
-		trace("OKKKKKKKKKKKKKKKKKKKKKKKKKKKKKk");
-		socket.on("con", packet => this._onDummyData(socket, packet)); // listen to "dummy" messages
+		socket.on("con", packet => this._onPlayerConnectReq(socket, packet)); // listen to "dummy" messages
+		socket.on("validation",packet =>this._onValidate(socket,packet));
 	}
 
-	_onDummyData(socket, packet) { // dummy message received
-		trace("connection asked");
+	_onPlayerConnectReq(socket, packet) { // dummy message received
+		trace("Connection request received.");
 		let blob = new Blob(socket.id,0,0,packet);
 		this.blobs.push(blob);
-		socket.emit("con_re", {message: "you are now connected", value: socket.id}); // answer dummy random message
+		trace("A new Blob is created.");
+		trace("Waiting for a player name");
+		socket.emit("con_re"/*, {message: "You can play from now", value: blob.name}*/); // answer dummy random message
+	}
+
+	_onValidate(socket,packet){
+		let i=0;
+		let validate=1;
+		trace("Checking if name is available and valid.");
+		//let answer = ["hello", ...params, "welcome!"].join(" "); // say hello
+		for (let i=0;i<this.blobs.length;i++){
+			if(this.blobs[i].name==packet){
+				trace("name already taken or non-valid.")
+				validate=0;
+				socket.emit("valid_name",{value: 0});
+			}
+		}
+		if(validate==1){
+			for(let i=0;i<this.blobs.length;i++){
+				if(this.blobs[i].id==socket.id){
+					trace("name is valid and has been saved");
+					this.blobs[i].name=packet;
+				}
+			}
+			socket.emit("valid_name",{value: 1});
+		}
 	}
 
 }
