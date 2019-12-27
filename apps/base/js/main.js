@@ -38,17 +38,17 @@ class Base {
 	onIOConnect() {
 		trace("Connected to server");
 		this.io.emit("con", {value: "positions_futures"}); // send test message
-		this.io.on("con_re", packet => this.onConnectData(packet)); // listen to "con_re" messages
+		this.io.on("con_re", packet => this.onBlobData(packet)); // listen to "con_re" messages
 	}
 
 
 	/**
-	 * @method onConnectData : con_re data received from io server
+	 * @method onBlobData : con_re data received from io server
 	 * @param {Object} data 
 	 */
-	onConnectData(data) {
+	onBlobData(data) {
 		trace("Please choose a name");
-		//this.mvc.controller.ioStartGame(data); // send it to controller
+		this.mvc.model.validateBlob(data); // send it to controller
 	}
 }
 
@@ -56,6 +56,7 @@ class MyModel extends Model {
 	name;
 	id;
 	io;
+	blob = [];
 	constructor() {
 		super();
 	}
@@ -75,6 +76,11 @@ class MyModel extends Model {
 	validate(params){
 		this.io.emit("validation",{value: params});
 		this.io.on("valid_name",packet =>this.mvc.controller.valCon(packet));
+	}
+
+	validateBlob(params){
+		this.blob = params;
+		trace(this.blob);
 	}
 
 }
@@ -102,7 +108,7 @@ class MyView extends View {
 		this.stage.appendChild(this.btn);
 	}
 
-	showMenu(){
+	showStartWindow(){
 				//create input for nickname
 				this.txt= document.createElement("input");
 				this.txt.setAttribute("type", "text");
@@ -150,7 +156,7 @@ class MyView extends View {
 		} // dispatch
 	}
 
-	prepareStage(){
+	cleanStage(){
 
 		 while (this.stage.firstChild) {
     		this.stage.removeChild(this.stage.firstChild);
@@ -158,15 +164,31 @@ class MyView extends View {
 	}
 
 	setGameStage(data){
+		trace("generation du terrain");
+		this.cleanStage();
 
-		trace(data);
-		this.txt= document.createElement("input");
-		this.txt.setAttribute("type", "text");
-		this.txt.setAttribute("value" , data);
-		this.stage.appendChild(this.txt);
-
+		this.canvas = document.createElement("canvas");
+		//this.canvas.style.top = "-100px";
+		//this.canvas.style.left = "-500px";
+		//this.canvas.style.position = "absolute";
+		this.canvas.setAttribute("width",window.innerWidth);
+		this.canvas.setAttribute("height",window.innerHeight);
+		
+		this.canvas.style.border = "solid 0px";
+		this.canvas.style.borderColor = "#000000";
+		this.canvas.style.backgroundColor = "beige";
+		this.stage.appendChild(this.canvas);
 	}
 
+	setBlob(){
+		trace("drawing blob");
+		this.ctx = this.canvas.getContext("2d");
+		this.ctx.beginPath();
+		this.ctx.fillStyle = "#FF4422";
+		this.ctx.ellipse(window.innerWidth/2,window.innerHeight/2, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
+		this.ctx.fill();
+		this.ctx.stroke();
+	}
 }
 
 class MyController extends Controller {
@@ -185,7 +207,7 @@ class MyController extends Controller {
 		trace("Name saved is", params);
 		this.mvc.model.name=params;//save the name into the model object of this client
 		this.name=params;
-		this.mvc.view.prepareStage(); 
+		this.mvc.view.cleanStage(); 
 		//await this.mvc.model.connect(params);// wait async request > response from server and update view table values
 		this.mvc.model.validate(params);
 	}
@@ -194,6 +216,7 @@ class MyController extends Controller {
 		trace(data);
 		//this.
 		this.mvc.view.setGameStage(data);
+		this.mvc.view.setBlob();
 	}
 
 	valCon(packet){
@@ -204,8 +227,7 @@ class MyController extends Controller {
 		}else{
 			trace("Name not fine, try a new one.");
 			this.mvc.view.prepareStage();
-			this.mvc.view.showMenu();
+			this.mvc.view.showStartWindow();
 		}
 	}
-
 }

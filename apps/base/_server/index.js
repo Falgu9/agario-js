@@ -33,10 +33,12 @@ class Base extends ModuleBase {
 	_onPlayerConnectReq(socket, packet) { // dummy message received
 		trace("Connection request received.");
 		let blob = new Blob(socket.id,0,0,packet);
+		blob.score = 25;
 		this.blobs.push(blob);
+		let data = { x: blob.x , y:blob.y, score:blob.score };
 		trace("A new Blob is created.");
 		trace("Waiting for a player name");
-		socket.emit("con_re"/*, {message: "You can play from now", value: blob.name}*/); // answer dummy random message
+		socket.emit("con_re", {value: data}); // answer dummy random message
 	}
 
 	_onValidate(socket,packet){
@@ -69,7 +71,8 @@ class Blob {
     id;
     x;
     y;
-    name;
+	name;
+	score;
 
     constructor(id, x, y,name){
         this.id =id;
