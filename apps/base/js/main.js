@@ -83,9 +83,19 @@ class MyModel extends Model {
 		trace(this.blob);
 	}
 
+	updatePosition(params){
+		this.io.emit("update",{value: params});
+		this.io.on("updated",packet =>this.mvc.controller.valCon(packet));
+	}
+
 }
 
 class MyView extends View {
+
+	x = null;
+	y = null;
+	ctx = null;
+	ingame=0;
 
 	constructor() {
 		super();
@@ -121,9 +131,53 @@ class MyView extends View {
 				this.btn.setAttribute("type", "button");
 				this.btn.setAttribute("value", "Play");
 				this.stage.appendChild(this.btn);
-
+				this.ingame=0;
 				this.activate();
 
+	}
+
+	//loading game scene 
+	setGameStage(data){
+		trace("generation du terrain");
+		this.cleanStage();
+		this.ingame=1;
+		this.canvas = document.createElement("canvas");
+		//this.canvas.style.top = "-100px";
+		//this.canvas.style.left = "-500px";
+		//this.canvas.style.position = "absolute";
+		this.canvas.setAttribute("width",window.innerWidth);
+		this.canvas.setAttribute("height",window.innerHeight);
+		this.canvas.style.border = "solid 0px";
+		this.canvas.style.borderColor = "#000000";
+		this.canvas.style.backgroundColor = "beige";
+		this.stage.appendChild(this.canvas);
+		this.ctx = this.canvas.getContext("2d");
+		this.activate();
+	}
+
+	//creating the player's blob
+	setBlob(){
+		trace("drawing blob");
+		this.ctx.beginPath();
+		this.ctx.fillStyle = "#FF4422";
+		this.ctx.ellipse(window.innerWidth/2,window.innerHeight/2, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
+		this.ctx.fill();
+		this.ctx.stroke();
+	}
+	
+	//function to draw the entire game scene
+	drawGame(){
+		trace("drawing game objects");
+		this.ctx.clearRect(0, 0, window.innerWidth,window.innerHeight);
+		this.setBlob();
+	}
+
+	//remove all graphic elements 
+	cleanStage(){
+		this.deactivate();
+		 while (this.stage.firstChild) {
+    		this.stage.removeChild(this.stage.firstChild);
+  		}
 	}
 
 	// activate UI
@@ -139,8 +193,16 @@ class MyView extends View {
 	}
 
 	addListeners() {
-		this.getBtnHandler = e => this.btnClick(e);
-		this.btn.addEventListener("click", this.getBtnHandler);
+
+		if(this.ingame==0){
+			this.getBtnHandler = e => this.btnClick(e);
+			this.btn.addEventListener("click", this.getBtnHandler);
+		}
+		if(this.ingame==1){
+			this.getCanvaHandler = e => this.mouseUpdate(e,this.canvas);
+			this.canvas.addEventListener("mousemove",this.getCanvaHandler);
+		}
+
 	}
 
 	removeListeners() {
@@ -156,38 +218,14 @@ class MyView extends View {
 		} // dispatch
 	}
 
-	cleanStage(){
-
-		 while (this.stage.firstChild) {
-    		this.stage.removeChild(this.stage.firstChild);
-  		}
-	}
-
-	setGameStage(data){
-		trace("generation du terrain");
-		this.cleanStage();
-
-		this.canvas = document.createElement("canvas");
-		//this.canvas.style.top = "-100px";
-		//this.canvas.style.left = "-500px";
-		//this.canvas.style.position = "absolute";
-		this.canvas.setAttribute("width",window.innerWidth);
-		this.canvas.setAttribute("height",window.innerHeight);
-		
-		this.canvas.style.border = "solid 0px";
-		this.canvas.style.borderColor = "#000000";
-		this.canvas.style.backgroundColor = "beige";
-		this.stage.appendChild(this.canvas);
-	}
-
-	setBlob(){
-		trace("drawing blob");
-		this.ctx = this.canvas.getContext("2d");
-		this.ctx.beginPath();
-		this.ctx.fillStyle = "#FF4422";
-		this.ctx.ellipse(window.innerWidth/2,window.innerHeight/2, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
-		this.ctx.fill();
-		this.ctx.stroke();
+	mouseUpdate(event,canvas){
+		trace("mouse moving");
+		let rect = canvas.getBoundingClientRect();
+		let cursor = {
+			x: (event.clientX - rect.left) / (rect.right - rect.left) * canvas.width,
+			y: (event.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
+		};
+		trace(cursor);
 	}
 }
 
@@ -216,7 +254,7 @@ class MyController extends Controller {
 		trace(data);
 		//this.
 		this.mvc.view.setGameStage(data);
-		this.mvc.view.setBlob();
+		this.mvc.view.drawGame();
 	}
 
 	valCon(packet){
@@ -229,5 +267,9 @@ class MyController extends Controller {
 			this.mvc.view.prepareStage();
 			this.mvc.view.showStartWindow();
 		}
+	}
+
+	updateGameScene(packet){
+
 	}
 }
