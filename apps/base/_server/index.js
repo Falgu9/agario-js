@@ -3,6 +3,7 @@ const ModuleBase = load("com/base"); // import ModuleBase class
 class Base extends ModuleBase {
 
 	blobs= [];
+	food =[];
 	constructor(app, settings) {
 		super(app, new Map([["name", "baseapp"], ["io", true]]));
 	}
@@ -26,6 +27,9 @@ class Base extends ModuleBase {
 	 */
 	_onIOConnect(socket) {
 		super._onIOConnect(socket); // do not remove super call
+		for(let i=0;i<50;i++){
+			this.food.push(new Food(Math.floor(Math.random() *600),Math.floor(Math.random() * 600),Math.floor(Math.random() * 25)));
+		}
 		socket.on("con", packet => this._onPlayerConnectReq(socket, packet)); // listen to "dummy" messages
 		socket.on("validation",packet =>this._onValidate(socket,packet));
 	}
@@ -44,6 +48,8 @@ class Base extends ModuleBase {
 	_onValidate(socket,packet){
 		let i=0;
 		let validate=1;
+		let data = this.food;
+		trace(this.food[0]);
 		trace("Checking if name is available and valid.");
 		//let answer = ["hello", ...params, "welcome!"].join(" "); // say hello
 		for (let i=0;i<this.blobs.length;i++){
@@ -60,7 +66,7 @@ class Base extends ModuleBase {
 					this.blobs[i].name=packet;
 				}
 			}
-			socket.emit("valid_name",{value: 1});
+			socket.emit("valid_name",{value: 1, food: data});
 		}
 	}
 
@@ -83,4 +89,17 @@ class Blob {
 
 }
 
+class Food {
+
+    x;
+    y;
+	nourish;
+
+    constructor(x, y,nourish){
+        this.nourish =nourish;
+        this.x = x;
+		this.y = y;
+    }
+
+}
 module.exports = Base; // export app class

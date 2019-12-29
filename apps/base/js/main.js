@@ -96,6 +96,9 @@ class MyView extends View {
 	y = null;
 	ctx = null;
 	ingame=0;
+	is_on=0;
+	food = null;
+
 
 	constructor() {
 		super();
@@ -160,16 +163,35 @@ class MyView extends View {
 		trace("drawing blob");
 		this.ctx.beginPath();
 		this.ctx.fillStyle = "#FF4422";
-		this.ctx.ellipse(window.innerWidth/2,window.innerHeight/2, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
+		if(this.is_on=0){
+			this.ctx.ellipse(window.innerWidth/2,window.innerHeight/2, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
+		}
+		else{
+			this.ctx.ellipse(this.mvc.model.blob.x,this.mvc.model.blob.y, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI);
+		}
+		this.ctx.fill();
+		this.ctx.stroke();
+	}
+
+	drawFood(food){
+		trace("drawing food");
+		this.ctx.beginPath();
+		this.ctx.fillStyle = "#FF4400";
+		this.ctx.ellipse(food.x,food.y, 10,10, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
 		this.ctx.fill();
 		this.ctx.stroke();
 	}
 	
+
 	//function to draw the entire game scene
 	drawGame(){
 		trace("drawing game objects");
-		this.ctx.clearRect(0, 0, window.innerWidth,window.innerHeight);
+	    this.ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
+    	this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		this.setBlob();
+		for(let i=0;i<50;i++){
+			this.drawFood(this.food[i]);
+		}
 	}
 
 	//remove all graphic elements 
@@ -225,7 +247,12 @@ class MyView extends View {
 			x: (event.clientX - rect.left) / (rect.right - rect.left) * canvas.width,
 			y: (event.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
 		};
+		this.mvc.model.blob.x=cursor.x;
+		this.mvc.model.blob.y=cursor.y;
 		trace(cursor);
+		this.drawGame();
+
+
 	}
 }
 
@@ -250,17 +277,18 @@ class MyController extends Controller {
 		this.mvc.model.validate(params);
 	}
 
-	ioStartGame(data){
+	ioStartGame(data,foods){
 		trace(data);
 		//this.
 		this.mvc.view.setGameStage(data);
-		this.mvc.view.drawGame();
+		this.mvc.view.drawGame(foods);
 	}
 
 	valCon(packet){
-		trace(packet.value);
+		trace(packet.food);
 		if(packet.value==1){
 			trace("Name is fine,game is starting.");
+			this.mvc.view.food = packet.food;
 			this.ioStartGame(this.name);
 		}else{
 			trace("Name not fine, try a new one.");
