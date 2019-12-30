@@ -101,7 +101,6 @@ class MyView extends View {
 	is_on=0;
 	food = null;
 
-
 	constructor() {
 		super();
 	}
@@ -157,8 +156,8 @@ class MyView extends View {
 		this.canvas.style.backgroundColor = "black";
 		this.stage.appendChild(this.canvas);
 		this.ctx = this.canvas.getContext("2d");
-		trace(this.mvc.model.blob.value.x);
-		this.ctx.translate(this.mvc.model.blob.value.x,this.mvc.model.blob.value.y);
+		trace(this.mvc.model.blob.x);
+		this.ctx.translate(this.mvc.model.blob.x,this.mvc.model.blob.y);
 		this.activate();
 	}
 
@@ -189,9 +188,8 @@ class MyView extends View {
 		trace("drawing game objects");
 	    this.ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
 		this.ctx.save();
-		this.ctx.translate(-this.mvc.model.blob.value.x ,-this.mvc.model.blob.value.y);
+		this.ctx.translate(this.mvc.model.blob.x - window.innerWidth/2,this.mvc.model.blob.y - window.innerHeight/2);
 		this.setBlob();
 		/*this.ctx.restore();
 		this.ctx.save();
@@ -257,8 +255,8 @@ class MyView extends View {
 			x: event.clientX - rect.left,
 			y: event.clientY - rect.top
 		};
-		this.mvc.model.blob.value.x=cursor.x;
-		this.mvc.model.blob.value.y=cursor.y;
+		this.mvc.model.blob.x=cursor.x;
+		this.mvc.model.blob.y=cursor.y;
 		this.mvc.model.windowX=event.clientX;
 		this.mvc.model.windowY=event.clientY;
 		trace(cursor);
