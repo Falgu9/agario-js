@@ -28,7 +28,7 @@ class Base extends ModuleBase {
 	_onIOConnect(socket) {
 		super._onIOConnect(socket); // do not remove super call
 		for(let i=0;i<50;i++){
-			this.food.push(new Food(Math.floor(Math.random() *600),Math.floor(Math.random() * 600),Math.floor(Math.random() * 25)));
+			this.food.push(new Food(Math.floor(Math.random() *4000),Math.floor(Math.random() * 4000),Math.floor(Math.random() * 25)));
 		}
 		socket.on("con", packet => this._onPlayerConnectReq(socket, packet)); // listen to "dummy" messages
 		socket.on("validation",packet =>this._onValidate(socket,packet));
@@ -36,13 +36,12 @@ class Base extends ModuleBase {
 
 	_onPlayerConnectReq(socket, packet) { // dummy message received
 		trace("Connection request received.");
-		let blob = new Blob(socket.id,0,0,packet);
+		let blob = new Blob(socket.id,new Food(Math.floor(Math.random() *4000)),new Food(Math.floor(Math.random() *4000)),packet);
 		blob.score = 25;
 		this.blobs.push(blob);
-		let data = { x: blob.x , y:blob.y, score:blob.score };
 		trace("A new Blob is created.");
 		trace("Waiting for a player name");
-		socket.emit("con_re", {value: data}); // answer dummy random message
+		socket.emit("con_re", {x: blob.x , y:blob.y, score:blob.score}); // answer dummy random message
 	}
 
 	_onValidate(socket,packet){

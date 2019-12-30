@@ -57,6 +57,8 @@ class MyModel extends Model {
 	id;
 	io;
 	blob = [];
+	windowX;
+	windowY;
 	constructor() {
 		super();
 	}
@@ -80,7 +82,7 @@ class MyModel extends Model {
 
 	validateBlob(params){
 		this.blob = params;
-		trace(this.blob);
+		trace(params);
 	}
 
 	updatePosition(params){
@@ -147,14 +149,16 @@ class MyView extends View {
 		this.canvas = document.createElement("canvas");
 		//this.canvas.style.top = "-100px";
 		//this.canvas.style.left = "-500px";
-		//this.canvas.style.position = "absolute";
-		this.canvas.setAttribute("width",window.innerWidth);
-		this.canvas.setAttribute("height",window.innerHeight);
+		this.canvas.style.position = "fixed";
+		this.canvas.setAttribute("width",4000);
+		this.canvas.setAttribute("height",4000);
 		this.canvas.style.border = "solid 0px";
 		this.canvas.style.borderColor = "#000000";
-		this.canvas.style.backgroundColor = "beige";
+		this.canvas.style.backgroundColor = "black";
 		this.stage.appendChild(this.canvas);
 		this.ctx = this.canvas.getContext("2d");
+		trace(this.mvc.model.blob.value.x);
+		this.ctx.translate(this.mvc.model.blob.value.x,this.mvc.model.blob.value.y);
 		this.activate();
 	}
 
@@ -163,12 +167,9 @@ class MyView extends View {
 		trace("drawing blob");
 		this.ctx.beginPath();
 		this.ctx.fillStyle = "#FF4422";
-		if(this.is_on=0){
-			this.ctx.ellipse(window.innerWidth/2,window.innerHeight/2, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
-		}
-		else{
-			this.ctx.ellipse(this.mvc.model.blob.x,this.mvc.model.blob.y, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI);
-		}
+		this.ctx.ellipse(window.innerWidth/2,window.innerHeight/2, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
+		//this.ctx.ellipse(this.mvc.model.blob.x,this.mvc.model.blob.y, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI);
+	
 		this.ctx.fill();
 		this.ctx.stroke();
 	}
@@ -187,11 +188,20 @@ class MyView extends View {
 	drawGame(){
 		trace("drawing game objects");
 	    this.ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
-    	this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+		this.ctx.save();
+		this.ctx.translate(-this.mvc.model.blob.value.x ,-this.mvc.model.blob.value.y);
 		this.setBlob();
+		/*this.ctx.restore();
+		this.ctx.save();
+		if( (this.mvc.model.windowX<window.innerWidth/3) || (this.mvc.model.windowX<(window.innerWidth*(2/3)))){
+			this.ctx.translate(this.canvas.width-this.mvc.model.blob.value.x,this.canvas.height-this.mvc.model.blob.value.y);
+		}*/
 		for(let i=0;i<50;i++){
 			this.drawFood(this.food[i]);
 		}
+		this.ctx.restore();
 	}
 
 	//remove all graphic elements 
@@ -244,11 +254,13 @@ class MyView extends View {
 		trace("mouse moving");
 		let rect = canvas.getBoundingClientRect();
 		let cursor = {
-			x: (event.clientX - rect.left) / (rect.right - rect.left) * canvas.width,
-			y: (event.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
+			x: event.clientX - rect.left,
+			y: event.clientY - rect.top
 		};
-		this.mvc.model.blob.x=cursor.x;
-		this.mvc.model.blob.y=cursor.y;
+		this.mvc.model.blob.value.x=cursor.x;
+		this.mvc.model.blob.value.y=cursor.y;
+		this.mvc.model.windowX=event.clientX;
+		this.mvc.model.windowY=event.clientY;
 		trace(cursor);
 		this.drawGame();
 
@@ -277,11 +289,11 @@ class MyController extends Controller {
 		this.mvc.model.validate(params);
 	}
 
-	ioStartGame(data,foods){
+	ioStartGame(data){
 		trace(data);
 		//this.
 		this.mvc.view.setGameStage(data);
-		this.mvc.view.drawGame(foods);
+		this.mvc.view.drawGame();
 	}
 
 	valCon(packet){
