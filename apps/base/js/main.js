@@ -59,6 +59,7 @@ class MyModel extends Model {
 	blob = [];
 	windowX;
 	windowY;
+	//cursor;
 	constructor() {
 		super();
 	}
@@ -166,7 +167,7 @@ class MyView extends View {
 		trace("drawing blob");
 		this.ctx.beginPath();
 		this.ctx.fillStyle = "#FF4422";
-		this.ctx.ellipse(window.innerWidth/2,window.innerHeight/2, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
+		this.ctx.ellipse(this.mvc.model.blob.x,this.mvc.model.blob.y, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
 		//this.ctx.ellipse(this.mvc.model.blob.x,this.mvc.model.blob.y, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI);
 	
 		this.ctx.fill();
@@ -189,7 +190,7 @@ class MyView extends View {
 	    this.ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		this.ctx.save();
-		this.ctx.translate(this.mvc.model.blob.x - window.innerWidth/2,this.mvc.model.blob.y - window.innerHeight/2);
+		this.ctx.translate(window.innerWidth/2 - this.mvc.model.blob.x ,window.innerHeight/2 - this.mvc.model.blob.y );
 		this.setBlob();
 		/*this.ctx.restore();
 		this.ctx.save();
@@ -249,14 +250,14 @@ class MyView extends View {
 	}
 
 	mouseUpdate(event,canvas){
-		trace("mouse moving");
+		//trace("mouse moving");
 		let rect = canvas.getBoundingClientRect();
 		let cursor = {
 			x: event.clientX - rect.left,
 			y: event.clientY - rect.top
 		};
-		this.mvc.model.blob.x=cursor.x;
-		this.mvc.model.blob.y=cursor.y;
+		this.mvc.model.blob.x=cursor.x - window.innerWidth/2;
+		this.mvc.model.blob.y=cursor.y - window.innerHeight/2;
 		this.mvc.model.windowX=event.clientX;
 		this.mvc.model.windowY=event.clientY;
 		trace(cursor);
