@@ -65,7 +65,7 @@ class MyModel extends Model {
 	blob = [];
 	windowX;
 	windowY;
-	//cursor;
+	cursor;
 	constructor() {
 		super();
 	}
@@ -108,13 +108,14 @@ class MyModel extends Model {
 
 
 class MyView extends View {
-
 	x = null;
 	y = null;
 	ctx = null;
 	ingame=0;
 	is_on=0;
 	food = null;
+	cursor = null;
+	
 
 	constructor() {
 		super();
@@ -161,8 +162,6 @@ class MyView extends View {
 		this.cleanStage();
 		this.ingame=1;
 		this.canvas = document.createElement("canvas");
-		//this.canvas.style.top = "-100px";
-		//this.canvas.style.left = "-500px";
 		this.canvas.style.position = "fixed";
 		this.canvas.setAttribute("width",4000);
 		this.canvas.setAttribute("height",4000);
@@ -171,6 +170,12 @@ class MyView extends View {
 		this.canvas.style.backgroundColor = "black";
 		this.stage.appendChild(this.canvas);
 		this.ctx = this.canvas.getContext("2d");
+		this.cursor = {
+			x: window.innerWidth/2,
+			y: window.innerHeight/2
+		};
+		this.mvc.model.blob.x= this.cursor.x;
+		this.mvc.model.blob.y= this.cursor.y;
 		trace(this.mvc.model.blob.x);
 		//this.ctx.translate(this.mvc.model.blob.x,this.mvc.model.blob.y);
 		this.activate();
@@ -198,15 +203,19 @@ class MyView extends View {
 
 	//function to draw the entire game scene
 	drawGame(){
+		let windowWidth = window.innerWidth/2;
+		let windowHeight = window.innerHeight/2;
 		trace("drawing game objects");
 	    this.ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		//this.ctx.save();
-		this.ctx.translate(window.innerWidth/2 - this.mvc.model.blob.x ,window.innerHeight/2 - this.mvc.model.blob.y);
+		this.ctx.translate(windowWidth - this.mvc.model.blob.x ,windowHeight - this.mvc.model.blob.y);
 		this.setBlob();
-		for(let i=0;i<50;i++){
+		for(let i=0;i<500;i++){
 			this.drawFood(this.food[i]);
 		}
+		this.mvc.model.blob.x += (this.cursor.x - windowWidth)/100;
+		this.mvc.model.blob.y += (this.cursor.y - windowHeight)/100;
 		//this.ctx.restore();
 	}
 
@@ -215,8 +224,23 @@ class MyView extends View {
 		let _this = this;
 		interval= setInterval(function() {
 			_this.drawGame();
-		},33);
-		
+		},33);	
+	}
+
+	mouseUpdate(event,canvas){
+		//trace("mouse moving");
+		let rect = canvas.getBoundingClientRect();
+		this.cursor = {
+			x: event.clientX - rect.left,
+			y: event.clientY - rect.top
+		};
+		this.mvc.model.windowX=event.clientX;
+		this.mvc.model.windowY=event.clientY;
+		//trace(this.cursor);
+		if(this.is_on==0){
+			this.drawGame();
+			this.is_on=1;
+		}
 	}
 
 	//remove all graphic elements 
@@ -263,26 +287,6 @@ class MyView extends View {
 		}else{
 			trace("nickname is non valid!");
 		} // dispatch
-	}
-
-	mouseUpdate(event,canvas){
-		//trace("mouse moving");
-		let rect = canvas.getBoundingClientRect();
-
-		let cursor = {
-			x: event.clientX - rect.left,
-			y: event.clientY - rect.top
-		};
-		this.mvc.model.blob.x= cursor.x;
-		this.mvc.model.blob.y= cursor.y;
-		this.mvc.model.windowX=event.clientX;
-		this.mvc.model.windowY=event.clientY;
-		trace(cursor);
-		if(this.is_on==0){
-			this.drawGame();
-			this.is_on=1;
-		}
-		
 	}
 }
 

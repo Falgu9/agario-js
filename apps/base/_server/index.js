@@ -27,7 +27,7 @@ class Base extends ModuleBase {
 	 */
 	_onIOConnect(socket) {
 		super._onIOConnect(socket); // do not remove super call
-		for(let i=0;i<50;i++){
+		for(let i=0;i<500;i++){
 			this.food.push(new Food(Math.floor(Math.random() *4000),Math.floor(Math.random() * 4000),Math.floor(Math.random() * 25)));
 		}
 		socket.on("con", packet => this._onPlayerConnectReq(socket, packet)); // listen to "dummy" messages
