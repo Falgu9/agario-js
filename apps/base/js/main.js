@@ -32,6 +32,11 @@ class Base {
 		console.log("response", result.response);
 	}
 
+	/*
+	async loop(){
+		await new Promise(resolve => setTimeout(resolve, Math.random() * 1000));
+	}*/
+
 	/**
 	 * @method onIOConnect : socket is connected
 	 */
@@ -56,6 +61,7 @@ class MyModel extends Model {
 	name;
 	id;
 	io;
+	score;
 	blob = [];
 	windowX;
 	windowY;
@@ -86,12 +92,20 @@ class MyModel extends Model {
 		trace(params);
 	}
 
-	updatePosition(params){
-		this.io.emit("update",{value: params});
-		this.io.on("updated",packet =>this.mvc.controller.valCon(packet));
+	updatePosition(){
+		trace(this.blob);	
+		this.io.emit("update",{value: this.blob});//send blob x and y to server 
+		this.io.on("updated",packet =>this.mvc.controller.updateBlobPos(packet));
 	}
 
+	sendUpdateMessage(){
+		this.io.emit("update",{value: this.blob});//send blob x and y to server 
+	}
+
+
 }
+
+
 
 class MyView extends View {
 
@@ -158,49 +172,51 @@ class MyView extends View {
 		this.stage.appendChild(this.canvas);
 		this.ctx = this.canvas.getContext("2d");
 		trace(this.mvc.model.blob.x);
-		this.ctx.translate(this.mvc.model.blob.x,this.mvc.model.blob.y);
+		//this.ctx.translate(this.mvc.model.blob.x,this.mvc.model.blob.y);
 		this.activate();
 	}
 
 	//creating the player's blob
 	setBlob(){
-		trace("drawing blob");
+		//trace("drawing blob");
 		this.ctx.beginPath();
 		this.ctx.fillStyle = "#FF4422";
 		this.ctx.ellipse(this.mvc.model.blob.x,this.mvc.model.blob.y, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
-		//this.ctx.ellipse(this.mvc.model.blob.x,this.mvc.model.blob.y, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI);
-	
 		this.ctx.fill();
 		this.ctx.stroke();
 	}
 
+	//function which draws food
 	drawFood(food){
-		trace("drawing food");
+		//trace("drawing food");
 		this.ctx.beginPath();
 		this.ctx.fillStyle = "#FF4400";
 		this.ctx.ellipse(food.x,food.y, 10,10, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
 		this.ctx.fill();
 		this.ctx.stroke();
 	}
-	
 
 	//function to draw the entire game scene
 	drawGame(){
 		trace("drawing game objects");
 	    this.ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-		this.ctx.save();
-		this.ctx.translate(window.innerWidth/2 - this.mvc.model.blob.x ,window.innerHeight/2 - this.mvc.model.blob.y );
+		//this.ctx.save();
+		this.ctx.translate(window.innerWidth/2 - this.mvc.model.blob.x ,window.innerHeight/2 - this.mvc.model.blob.y);
 		this.setBlob();
-		/*this.ctx.restore();
-		this.ctx.save();
-		if( (this.mvc.model.windowX<window.innerWidth/3) || (this.mvc.model.windowX<(window.innerWidth*(2/3)))){
-			this.ctx.translate(this.canvas.width-this.mvc.model.blob.value.x,this.canvas.height-this.mvc.model.blob.value.y);
-		}*/
 		for(let i=0;i<50;i++){
 			this.drawFood(this.food[i]);
 		}
-		this.ctx.restore();
+		//this.ctx.restore();
+	}
+
+	loopGame(){
+		let interval=null;
+		let _this = this;
+		interval= setInterval(function() {
+			_this.drawGame();
+		},33);
+		
 	}
 
 	//remove all graphic elements 
@@ -252,18 +268,21 @@ class MyView extends View {
 	mouseUpdate(event,canvas){
 		//trace("mouse moving");
 		let rect = canvas.getBoundingClientRect();
+
 		let cursor = {
 			x: event.clientX - rect.left,
 			y: event.clientY - rect.top
 		};
-		this.mvc.model.blob.x=cursor.x - window.innerWidth/2;
-		this.mvc.model.blob.y=cursor.y - window.innerHeight/2;
+		this.mvc.model.blob.x= cursor.x;
+		this.mvc.model.blob.y= cursor.y;
 		this.mvc.model.windowX=event.clientX;
 		this.mvc.model.windowY=event.clientY;
 		trace(cursor);
-		this.drawGame();
-
-
+		if(this.is_on==0){
+			this.drawGame();
+			this.is_on=1;
+		}
+		
 	}
 }
 
@@ -289,10 +308,12 @@ class MyController extends Controller {
 	}
 
 	ioStartGame(data){
-		trace(data);
-		//this.
+		let interval= null;
 		this.mvc.view.setGameStage(data);
 		this.mvc.view.drawGame();
+		trace("starting loop");
+		this.mvc.view.loopGame();
+		//this.mvc.model.updatePosition();
 	}
 
 	valCon(packet){
@@ -308,7 +329,13 @@ class MyController extends Controller {
 		}
 	}
 
-	updateGameScene(packet){
+	updateBlobPos(data){
+		trace(data);
+		this.mvc.model.blob.x=data.x;
+		this.mvc.model.blob.y=data.y;
+		//score
+		//this.mvc.view.drawGame();
+		//this.mvc.model.updatePosition();
 
 	}
 }

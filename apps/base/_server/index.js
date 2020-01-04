@@ -32,6 +32,8 @@ class Base extends ModuleBase {
 		}
 		socket.on("con", packet => this._onPlayerConnectReq(socket, packet)); // listen to "dummy" messages
 		socket.on("validation",packet =>this._onValidate(socket,packet));
+		socket.on("update",packet=>this._onUpdate(socket,packet));
+
 	}
 
 	_onPlayerConnectReq(socket, packet) { // dummy message received
@@ -68,6 +70,23 @@ class Base extends ModuleBase {
 			socket.emit("valid_name",{value: 1, food: data});
 		}
 	}
+
+	_onUpdate(socket,packet){
+		let my_blob =null;
+		trace(packet);
+		for(let i=0;i<this.blobs.length;i++){
+			if(this.blobs[i].id==socket.id){
+				this.blobs[i].x = packet.value.x;
+				this.blobs[i].y = packet.value.y;
+				my_blob=this.blobs[i];
+				//tester si en vie 
+				//if scores == 0 it means the blob is dead 
+			}
+		}
+		socket.emit("updated",{x: my_blob.x , y: my_blob.y, /*, other_blobs: this.blobs*/});
+	}
+
+
 
 }
 
