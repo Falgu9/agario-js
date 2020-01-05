@@ -32,10 +32,6 @@ class Base {
 		console.log("response", result.response);
 	}
 
-	/*
-	async loop(){
-		await new Promise(resolve => setTimeout(resolve, Math.random() * 1000));
-	}*/
 
 	/**
 	 * @method onIOConnect : socket is connected
@@ -58,6 +54,7 @@ class Base {
 }
 
 class MyModel extends Model {
+
 	name;
 	id;
 	io;
@@ -66,6 +63,7 @@ class MyModel extends Model {
 	windowX;
 	windowY;
 	cursor;
+
 	constructor() {
 		super();
 	}
@@ -93,9 +91,9 @@ class MyModel extends Model {
 	}
 
 	updatePosition(){
-		trace(this.blob);	
+		//trace(this.blob);	
 		this.io.emit("update",{value: this.blob});//send blob x and y to server 
-		this.io.on("updated",packet =>this.mvc.controller.updateBlobPos(packet));
+		this.io.on("updated",packet =>this.mvc.controller.updateWorldData(packet));
 	}
 
 	sendUpdateMessage(){
@@ -114,6 +112,7 @@ class MyView extends View {
 	ingame=0;
 	is_on=0;
 	food = null;
+	blobs = null;
 	cursor = null;
 	
 
@@ -201,6 +200,19 @@ class MyView extends View {
 		this.ctx.stroke();
 	}
 
+	//function which draws the other players blobs
+	drawOthers(){
+		for(let i=0;i<this.blobs.length;i++){
+			if(this.blobs[i].name!=this.mvc.model.name){
+				this.ctx.beginPath();
+				this.ctx.fillStyle = "#FF4200";
+				this.ctx.ellipse(this.blobs[i].x,this.blobs[i].y, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
+				this.ctx.fill();
+				this.ctx.stroke();
+			}
+		}
+	}
+
 	//function to draw the entire game scene
 	drawGame(){
 		let windowWidth = window.innerWidth/2;
@@ -214,6 +226,10 @@ class MyView extends View {
 		for(let i=0;i<500;i++){
 			this.drawFood(this.food[i]);
 		}
+		trace(this.blobs);
+		if(this.blobs.length>=2){
+			this.drawOthers();
+		}
 		this.mvc.model.blob.x += (this.cursor.x - windowWidth)/100;
 		this.mvc.model.blob.y += (this.cursor.y - windowHeight)/100;
 		//this.ctx.restore();
@@ -224,6 +240,7 @@ class MyView extends View {
 		let _this = this;
 		interval= setInterval(function() {
 			_this.drawGame();
+			_this.mvc.model.updatePosition();
 		},33);	
 	}
 
@@ -321,25 +338,22 @@ class MyController extends Controller {
 	}
 
 	valCon(packet){
-		trace(packet.food);
+		trace(packet);
 		if(packet.value==1){
 			trace("Name is fine,game is starting.");
 			this.mvc.view.food = packet.food;
+			this.mvc.view.blobs = packet.others;
 			this.ioStartGame(this.name);
 		}else{
 			trace("Name not fine, try a new one.");
-			this.mvc.view.prepareStage();
+			this.mvc.view.cleanStage();
 			this.mvc.view.showStartWindow();
 		}
 	}
 
-	updateBlobPos(data){
-		trace(data);
-		this.mvc.model.blob.x=data.x;
-		this.mvc.model.blob.y=data.y;
-		//score
-		//this.mvc.view.drawGame();
-		//this.mvc.model.updatePosition();
-
+	//function which receive the world data from the server and save them into the view to be displayed
+	updateWorldData(data){
+		this.mvc.view.blobs=data.other_blobs;
+		this.mvc.view.food = data.food;
 	}
 }

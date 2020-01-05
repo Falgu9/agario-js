@@ -38,7 +38,7 @@ class Base extends ModuleBase {
 
 	_onPlayerConnectReq(socket, packet) { // dummy message received
 		trace("Connection request received.");
-		let blob = new Blob(socket.id,new Food(Math.floor(Math.random() *4000)),new Food(Math.floor(Math.random() *4000)),packet);
+		let blob = new Blob(socket.id,Math.floor(Math.random() *4000),Math.floor(Math.random() *4000),packet.value);
 		blob.score = 25;
 		this.blobs.push(blob);
 		trace("A new Blob is created.");
@@ -49,12 +49,10 @@ class Base extends ModuleBase {
 	_onValidate(socket,packet){
 		let i=0;
 		let validate=1;
-		let data = this.food;
-		trace(this.food[0]);
 		trace("Checking if name is available and valid.");
 		//let answer = ["hello", ...params, "welcome!"].join(" "); // say hello
 		for (let i=0;i<this.blobs.length;i++){
-			if(this.blobs[i].name==packet){
+			if(this.blobs[i].name==packet.value){
 				trace("name already taken or non-valid.")
 				validate=0;
 				socket.emit("valid_name",{value: 0});
@@ -64,10 +62,10 @@ class Base extends ModuleBase {
 			for(let i=0;i<this.blobs.length;i++){
 				if(this.blobs[i].id==socket.id){
 					trace("name is valid and has been saved");
-					this.blobs[i].name=packet;
+					this.blobs[i].name=packet.value;
 				}
 			}
-			socket.emit("valid_name",{value: 1, food: data});
+			socket.emit("valid_name",{value: 1, food: this.food, others: this.blobs});
 		}
 	}
 
@@ -83,7 +81,7 @@ class Base extends ModuleBase {
 				//if scores == 0 it means the blob is dead 
 			}
 		}
-		socket.emit("updated",{x: my_blob.x , y: my_blob.y, /*, other_blobs: this.blobs*/});
+		socket.emit("updated",{other_blobs: this.blobs,food: this.food});
 	}
 
 
