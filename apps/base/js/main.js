@@ -114,6 +114,8 @@ class MyView extends View {
 	food = null;
 	blobs = null;
 	cursor = null;
+	interval =null;
+	colorOfBlob = null;
 	
 
 	constructor() {
@@ -122,18 +124,23 @@ class MyView extends View {
 
 	initialize(mvc) {
 		super.initialize(mvc);
+		this.div= document.createElement("div");
+
 
 		//create input for nickname
 		this.txt= document.createElement("input");
 		this.txt.setAttribute("type", "text");
 		this.txt.setAttribute("id" , "txt");
+		this.txt.style.top="50%";
 		this.stage.appendChild(this.txt);
 
 		// create get test btn
 		this.btn = document.createElement("button");
 		this.btn.setAttribute("id","btn");
 		this.btn.setAttribute("type", "button");
-		this.btn.setAttribute("value", "Play");
+		this.btn.innerHTML = 'Play !';
+		this.btn.style.float="left";
+		this.btn.style.top="50%";
 		this.stage.appendChild(this.btn);
 	}
 
@@ -148,7 +155,7 @@ class MyView extends View {
 				this.btn = document.createElement("button");
 				this.btn.setAttribute("id","btn");
 				this.btn.setAttribute("type", "button");
-				this.btn.setAttribute("value", "Play");
+				this.btn.innerHTML = 'Play !';
 				this.stage.appendChild(this.btn);
 				this.ingame=0;
 				this.activate();
@@ -166,27 +173,28 @@ class MyView extends View {
 		this.canvas.setAttribute("height",4000);
 		this.canvas.style.border = "solid 0px";
 		this.canvas.style.borderColor = "#000000";
-		this.canvas.style.backgroundColor = "black";
+		this.canvas.style.backgroundColor = "grey";
 		this.stage.appendChild(this.canvas);
 		this.ctx = this.canvas.getContext("2d");
 		this.cursor = {
 			x: window.innerWidth/2,
 			y: window.innerHeight/2
 		};
-		this.mvc.model.blob.x= this.cursor.x;
-		this.mvc.model.blob.y= this.cursor.y;
-		trace(this.mvc.model.blob.x);
-		//this.ctx.translate(this.mvc.model.blob.x,this.mvc.model.blob.y);
+		this.mvc.model.blob.x= this.mvc.model.blob.x+this.cursor.x;
+		this.mvc.model.blob.y= this.mvc.model.blob.y+this.cursor.y;
 		this.activate();
+
+		this.colorOfBlob = '#' + (function co(lor){   return (lor +=
+			[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)])
+			&& (lor.length == 6) ?  lor : co(lor); })('');
+		trace(this.colorOfBlob);
 	}
 
 	//creating the player's blob
 	setBlob(){
-		//trace("drawing blob");
-		trace(this.mvc.model.blob.score);
-		//this.mvc.model.blob.score = 0;
+		//trace(this.mvc.model.blob.score);
 		this.ctx.beginPath();
-		this.ctx.fillStyle = "#FF4422";
+		this.ctx.fillStyle = this.colorOfBlob;
 		this.ctx.ellipse(this.mvc.model.blob.x,this.mvc.model.blob.y, this.mvc.model.blob.score,this.mvc.model.blob.score, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
 		this.ctx.fill();
 		this.ctx.stroke();
@@ -196,7 +204,7 @@ class MyView extends View {
 	drawFood(food){
 		//trace("drawing food");
 		this.ctx.beginPath();
-		this.ctx.fillStyle = "#FF4400";
+		this.ctx.fillStyle = food.color;
 		this.ctx.ellipse(food.x,food.y, food.nourish,food.nourish, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
 		this.ctx.fill();
 		this.ctx.stroke();
@@ -220,12 +228,14 @@ class MyView extends View {
 		let windowWidth = window.innerWidth/2;
 		let windowHeight = window.innerHeight/2;
 		//trace("drawing game objects");
+		//trace(this.mvc.model.blob.x);
 	    this.ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-		//this.ctx.save();
+		this.ctx.save();
+		//trace(this.mvc.model.blob.score);
+		//this.ctx.scale(this.mvc.model.blob.score/20,this.mvc.model.blob.score/20);
 		this.ctx.translate(windowWidth - this.mvc.model.blob.x ,windowHeight - this.mvc.model.blob.y);
 		this.setBlob();
-		//trace(this.food.length);
 		for(let i=0;i<this.food.length;i++){
 			this.drawFood(this.food[i]);
 		}
@@ -234,15 +244,28 @@ class MyView extends View {
 		}
 		this.mvc.model.blob.x += (this.cursor.x - windowWidth)/100;
 		this.mvc.model.blob.y += (this.cursor.y - windowHeight)/100;
-		//this.ctx.restore();
+
+		if(this.mvc.model.blob.x>= 4000){
+			this.mvc.model.blob.x= 4000;
+		}
+		if(this.mvc.model.blob.y>= 4000){
+			this.mvc.model.blob.y= 4000;
+		}
+		if(this.mvc.model.blob.x<=0){
+			this.mvc.model.blob.x= 0;
+		}
+		if(this.mvc.model.blob.y<=0){
+			this.mvc.model.blob.y= 0;
+		}
+		this.ctx.restore();
 	}
 
 	loopGame(){
-		let interval=null;
 		let _this = this;
-		interval= setInterval(function() {
-			_this.drawGame();
+		this.interval= setInterval(function() {
 			_this.mvc.model.sendUpdatePositionMessage();
+			_this.drawGame();
+			
 		},33);	
 	}
 
@@ -355,9 +378,20 @@ class MyController extends Controller {
 
 	//function which receive the world data from the server and save them into the view to be displayed
 	updateWorldData(data){
-		this.mvc.model.blob.score = data.blob.score;
-		this.mvc.view.blobs=data.other_blobs;
+		trace(data.blob.isAlive);
+		if(data.blob.isAlive===true){
+		
+			this.mvc.model.blob.score = data.blob.score;
+			this.mvc.view.blobs=data.other_blobs;
+		}else{
+			trace("you've been killed");
+			clearInterval(this.mvc.view.interval);
+			this.mvc.view.cleanStage();
+			this.mvc.view.showStartWindow();
+		}
 	}
+
+
 	updateFoodData(data){
 		this.mvc.view.food = data.food;
 	}

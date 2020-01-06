@@ -58,7 +58,7 @@ class Base extends ModuleBase {
 		trace("Checking if name is available and valid.");
 		//let answer = ["hello", ...params, "welcome!"].join(" "); // say hello
 		for (let i=0;i<this.blobs.length;i++){
-			if(this.blobs[i].name==packet.value){
+			if((this.blobs[i].name==packet.value) && (this.blobs[i].isAlive==true)){
 				trace("name already taken or non-valid.")
 				validate=0;
 				socket.emit("valid_name",{value: 0});
@@ -69,6 +69,7 @@ class Base extends ModuleBase {
 				if(this.blobs[i].id==socket.id){
 					trace("name is valid and has been saved");
 					this.blobs[i].name=packet.value;
+					this.blobs[i].isAlive=true;
 				}
 			}
 			socket.emit("valid_name",{value: 1, food: this.food, others: this.blobs});
@@ -82,17 +83,19 @@ class Base extends ModuleBase {
 			if(this.blobs[i].id==socket.id){
 				this.blobs[i].x = packet.value.x;
 				this.blobs[i].y = packet.value.y;
-				
-
 				for(let j = 0;j<this.blobs.length;j++){
 					if(this.blobs[i].id!=this.blobs[j].id){
-						trace(this.blobs[i].score);
+						//trace(this.blobs[i].score);
 						var dx = this.blobs[i].x - this.blobs[j].x;
 						var dy = this.blobs[i].y - this.blobs[j].y;
 						var distance = Math.sqrt(dx * dx + dy * dy);
 						if (distance < this.blobs[i].score + this.blobs[j].score){
 							if(this.blobs[i].score > this.blobs[j].score){
-								this.blobs[j].score = 0;
+								this.blobs[j].score = 20;
+								trace(this.blobs[j].score);
+								this.blobs[j].x = Math.floor(Math.random() *4000);
+								this.blobs[j].y = Math.floor(Math.random() *4000);
+								this.blobs[j].isAlive = false;
 							}
 							else{
 								this.blobs[i].score = 0;
@@ -131,12 +134,14 @@ class Blob {
     y;
 	name;
 	score;
+	isAlive;
 
     constructor(id, x, y,name){
         this.id =id;
         this.x = x;
 		this.y = y;
 		this.name = name;
+		this.isAlive=true;
     }
 
 }
@@ -146,11 +151,15 @@ class Food {
     x;
     y;
 	nourish;
+	color;
 
     constructor(x, y,nourish){
         this.nourish =nourish;
         this.x = x;
 		this.y = y;
+		this.color = '#' + (function co(lor){   return (lor +=
+			[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)])
+			&& (lor.length == 6) ?  lor : co(lor); })('');
     }
 
 }
