@@ -124,9 +124,6 @@ class MyView extends View {
 
 	initialize(mvc) {
 		super.initialize(mvc);
-		this.div= document.createElement("div");
-
-
 		//create input for nickname
 		this.txt= document.createElement("input");
 		this.txt.setAttribute("type", "text");
