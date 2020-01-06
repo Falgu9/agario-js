@@ -90,14 +90,14 @@ class MyModel extends Model {
 		trace(params);
 	}
 
-	updatePosition(){
+	sendUpdatePositionMessage(){
 		//trace(this.blob);	
 		this.io.emit("update",{value: this.blob});//send blob x and y to server 
-		this.io.on("updated",packet =>this.mvc.controller.updateWorldData(packet));
 	}
 
-	sendUpdateMessage(){
-		this.io.emit("update",{value: this.blob});//send blob x and y to server 
+	searchDataUpdate(){
+		this.io.on("updated",packet =>this.mvc.controller.updateWorldData(packet));
+		this.io.on("foodupdate",packet =>this.mvc.controller.updateFoodData(packet));
 	}
 
 
@@ -183,9 +183,11 @@ class MyView extends View {
 	//creating the player's blob
 	setBlob(){
 		//trace("drawing blob");
+		trace(this.mvc.model.blob.score);
+		//this.mvc.model.blob.score = 0;
 		this.ctx.beginPath();
 		this.ctx.fillStyle = "#FF4422";
-		this.ctx.ellipse(this.mvc.model.blob.x,this.mvc.model.blob.y, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
+		this.ctx.ellipse(this.mvc.model.blob.x,this.mvc.model.blob.y, this.mvc.model.blob.score,this.mvc.model.blob.score, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
 		this.ctx.fill();
 		this.ctx.stroke();
 	}
@@ -195,7 +197,7 @@ class MyView extends View {
 		//trace("drawing food");
 		this.ctx.beginPath();
 		this.ctx.fillStyle = "#FF4400";
-		this.ctx.ellipse(food.x,food.y, 10,10, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
+		this.ctx.ellipse(food.x,food.y, food.nourish,food.nourish, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
 		this.ctx.fill();
 		this.ctx.stroke();
 	}
@@ -206,7 +208,7 @@ class MyView extends View {
 			if(this.blobs[i].name!=this.mvc.model.name){
 				this.ctx.beginPath();
 				this.ctx.fillStyle = "#FF4200";
-				this.ctx.ellipse(this.blobs[i].x,this.blobs[i].y, 25,25, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
+				this.ctx.ellipse(this.blobs[i].x,this.blobs[i].y, this.blobs[i].score,this.blobs[i].score, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
 				this.ctx.fill();
 				this.ctx.stroke();
 			}
@@ -217,16 +219,16 @@ class MyView extends View {
 	drawGame(){
 		let windowWidth = window.innerWidth/2;
 		let windowHeight = window.innerHeight/2;
-		trace("drawing game objects");
+		//trace("drawing game objects");
 	    this.ctx.setTransform(1,0,0,1,0,0);//reset the transform matrix as it is cumulative
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		//this.ctx.save();
 		this.ctx.translate(windowWidth - this.mvc.model.blob.x ,windowHeight - this.mvc.model.blob.y);
 		this.setBlob();
-		for(let i=0;i<500;i++){
+		//trace(this.food.length);
+		for(let i=0;i<this.food.length;i++){
 			this.drawFood(this.food[i]);
 		}
-		trace(this.blobs);
 		if(this.blobs.length>=2){
 			this.drawOthers();
 		}
@@ -240,7 +242,7 @@ class MyView extends View {
 		let _this = this;
 		interval= setInterval(function() {
 			_this.drawGame();
-			_this.mvc.model.updatePosition();
+			_this.mvc.model.sendUpdatePositionMessage();
 		},33);	
 	}
 
@@ -333,12 +335,12 @@ class MyController extends Controller {
 		this.mvc.view.setGameStage(data);
 		this.mvc.view.drawGame();
 		trace("starting loop");
+		this.mvc.model.searchDataUpdate();
 		this.mvc.view.loopGame();
-		//this.mvc.model.updatePosition();
 	}
 
 	valCon(packet){
-		trace(packet);
+		//trace(packet);
 		if(packet.value==1){
 			trace("Name is fine,game is starting.");
 			this.mvc.view.food = packet.food;
@@ -353,7 +355,10 @@ class MyController extends Controller {
 
 	//function which receive the world data from the server and save them into the view to be displayed
 	updateWorldData(data){
+		this.mvc.model.blob.score = data.blob.score;
 		this.mvc.view.blobs=data.other_blobs;
+	}
+	updateFoodData(data){
 		this.mvc.view.food = data.food;
 	}
 }

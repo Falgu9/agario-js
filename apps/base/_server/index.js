@@ -4,6 +4,8 @@ class Base extends ModuleBase {
 
 	blobs= [];
 	food =[];
+	sockets = [];
+	foodGenerated = false;
 	constructor(app, settings) {
 		super(app, new Map([["name", "baseapp"], ["io", true]]));
 	}
@@ -27,8 +29,11 @@ class Base extends ModuleBase {
 	 */
 	_onIOConnect(socket) {
 		super._onIOConnect(socket); // do not remove super call
-		for(let i=0;i<500;i++){
-			this.food.push(new Food(Math.floor(Math.random() *4000),Math.floor(Math.random() * 4000),Math.floor(Math.random() * 25)));
+		if(this.foodGenerated == false){
+			for(let i=0;i<300;i++){
+				this.food.push(new Food(Math.floor(Math.random() *4000),Math.floor(Math.random() * 4000),10));
+			}
+			this.foodGenerated = true;
 		}
 		socket.on("con", packet => this._onPlayerConnectReq(socket, packet)); // listen to "dummy" messages
 		socket.on("validation",packet =>this._onValidate(socket,packet));
@@ -39,7 +44,8 @@ class Base extends ModuleBase {
 	_onPlayerConnectReq(socket, packet) { // dummy message received
 		trace("Connection request received.");
 		let blob = new Blob(socket.id,Math.floor(Math.random() *4000),Math.floor(Math.random() *4000),packet.value);
-		blob.score = 25;
+		blob.score = 20;
+		this.sockets.push(socket);
 		this.blobs.push(blob);
 		trace("A new Blob is created.");
 		trace("Waiting for a player name");
@@ -71,20 +77,50 @@ class Base extends ModuleBase {
 
 	_onUpdate(socket,packet){
 		let my_blob =null;
-		trace(packet);
+		//trace(packet);
 		for(let i=0;i<this.blobs.length;i++){
 			if(this.blobs[i].id==socket.id){
 				this.blobs[i].x = packet.value.x;
 				this.blobs[i].y = packet.value.y;
-				my_blob=this.blobs[i];
+				
+
+				for(let j = 0;j<this.blobs.length;j++){
+					if(this.blobs[i].id!=this.blobs[j].id){
+						trace(this.blobs[i].score);
+						var dx = this.blobs[i].x - this.blobs[j].x;
+						var dy = this.blobs[i].y - this.blobs[j].y;
+						var distance = Math.sqrt(dx * dx + dy * dy);
+						if (distance < this.blobs[i].score + this.blobs[j].score){
+							if(this.blobs[i].score > this.blobs[j].score){
+								this.blobs[j].score = 0;
+							}
+							else{
+								this.blobs[i].score = 0;
+							}
+						}
+					}
+				}
+				for(let j = 0;j<this.food.length;j++){
+					var dx = this.blobs[i].x - this.food[j].x;
+					var dy = this.blobs[i].y - this.food[j].y;
+					var distance = Math.sqrt(dx * dx + dy * dy);
+					if (distance < this.blobs[i].score + this.food[j].nourish){
+						this.blobs[i].score += this.food[j].nourish/5;
+						this.food.splice(j,1);
+						this.food.push(new Food(Math.floor(Math.random() *4000),Math.floor(Math.random() * 4000),10));
+					}
+				}
+
 				//tester si en vie 
-				//if scores == 0 it means the blob is dead 
+				//if scores == 0 it means the blob is dead
+				my_blob=this.blobs[i]; 
 			}
 		}
-		socket.emit("updated",{other_blobs: this.blobs,food: this.food});
+		socket.emit("updated",{blob: my_blob, other_blobs: this.blobs});
+		for(let i = 0;i < this.sockets.length;i++){
+			this.sockets[i].emit("foodupdate", {food: this.food});
+		}
 	}
-
-
 
 }
 
