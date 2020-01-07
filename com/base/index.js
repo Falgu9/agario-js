@@ -94,9 +94,11 @@ class ModuleBase {
      * @param {Socket} socket : 
      */
     _onIOConnect(socket) {
+        
         trace("io connect", this._name);
         this._clients.set(socket.id, socket);
-        socket.on("disconnect", this._onIODisconnect.bind(this));
+        //trace(socket.id);
+        socket.on("disconnect",this._onIODisconnect.bind(this));
     }
 
     /**
@@ -104,8 +106,10 @@ class ModuleBase {
      * @param {Socket} socket : 
      */
     _onIODisconnect(socket) {
+        //trace(socket.id);
         trace("io disconnect", this._name);
         this._clients.delete(socket.id);
+        
     }
 
     /**

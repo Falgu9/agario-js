@@ -38,12 +38,11 @@ class Base extends ModuleBase {
 		socket.on("con", packet => this._onPlayerConnectReq(socket, packet)); // listen to "dummy" messages
 		socket.on("validation",packet =>this._onValidate(socket,packet));
 		socket.on("update",packet=>this._onUpdate(socket,packet));
-
 	}
 
 	_onPlayerConnectReq(socket, packet) { // dummy message received
 		trace("Connection request received.");
-		let blob = new Blob(socket.id,Math.floor(Math.random() *4000),Math.floor(Math.random() *4000),packet.value);
+		let blob = new Blob(socket.id,Math.floor(Math.random() *4000),Math.floor(Math.random() *4000),"null");
 		blob.score = 20;
 		this.sockets.push(socket);
 		this.blobs.push(blob);
@@ -91,14 +90,22 @@ class Base extends ModuleBase {
 						var distance = Math.sqrt(dx * dx + dy * dy);
 						if (distance < this.blobs[i].score + this.blobs[j].score){
 							if(this.blobs[i].score > this.blobs[j].score){
+								this.blobs[i].score += this.blobs[j].score;
 								this.blobs[j].score = 20;
-								trace(this.blobs[j].score);
+								this.blobs[j].name  = "null";
+								//trace(this.blobs[j].score);
 								this.blobs[j].x = Math.floor(Math.random() *4000);
 								this.blobs[j].y = Math.floor(Math.random() *4000);
 								this.blobs[j].isAlive = false;
 							}
 							else{
-								this.blobs[i].score = 0;
+								this.blobs[j].score += this.blobs[i].score;
+								this.blobs[i].score = 20;
+								this.blobs[i].name  = "null";
+								//trace(this.blobs[j].score);
+								this.blobs[i].x = Math.floor(Math.random() *4000);
+								this.blobs[i].y = Math.floor(Math.random() *4000);
+								this.blobs[i].isAlive = false;
 							}
 						}
 					}
@@ -125,6 +132,18 @@ class Base extends ModuleBase {
 		}
 	}
 
+	_onIODisconnect(socket){
+		trace(socket.id);
+		trace(this.blobs);
+		for(let i=0;i<this.blobs.length;i++){
+			
+			if(this.blobs[i].id==socket.id){
+				
+				this.blobs.splice(i,1);
+			}
+		}
+		super._onIODisconnect(socket);
+	}
 }
 
 class Blob {

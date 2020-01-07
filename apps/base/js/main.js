@@ -38,7 +38,7 @@ class Base {
 	 */
 	onIOConnect() {
 		trace("Connected to server");
-		this.io.emit("con", {value: "positions_futures"}); // send test message
+		this.io.emit("con",{value: ""}); // send test message
 		this.io.on("con_re", packet => this.onBlobData(packet)); // listen to "con_re" messages
 	}
 
@@ -99,8 +99,6 @@ class MyModel extends Model {
 		this.io.on("updated",packet =>this.mvc.controller.updateWorldData(packet));
 		this.io.on("foodupdate",packet =>this.mvc.controller.updateFoodData(packet));
 	}
-
-
 }
 
 
@@ -157,9 +155,11 @@ class MyView extends View {
 				this.btn.setAttribute("type", "button");
 				this.btn.innerHTML = 'Play !';
 				this.stage.appendChild(this.btn);
+				
 				this.ingame=0;
 				this.activate();
-
+				
+				
 	}
 
 	//loading game scene 
@@ -173,8 +173,9 @@ class MyView extends View {
 		this.canvas.setAttribute("height",4000);
 		this.canvas.style.border = "solid 0px";
 		this.canvas.style.borderColor = "#000000";
-		this.canvas.style.backgroundColor = "grey";
+		this.canvas.style.backgroundColor = "#F5F5DC";
 		this.stage.appendChild(this.canvas);
+		this.setScoreTab();
 		this.ctx = this.canvas.getContext("2d");
 		this.cursor = {
 			x: window.innerWidth/2,
@@ -188,6 +189,25 @@ class MyView extends View {
 			[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)])
 			&& (lor.length == 6) ?  lor : co(lor); })('');
 		trace(this.colorOfBlob);
+	}
+
+	setScoreTab(){
+		let scoreTabWidth = 120;
+		this.scoreTab = document.createElement("table");
+		this.scoreTab.style.width = scoreTabWidth + "px";
+		this.scoreTab.style.height = "100px";
+		this.scoreTab.style.top = "10px";
+		let l = window.innerWidth - scoreTabWidth - 10;
+		this.scoreTab.style.left = l.toString() + "px";
+		this.scoreTab.style.position = "absolute";
+		this.scoreTab.style.backgroundColor = "#FFF5EE";
+		this.scoreTab.style.border = "4px solid #F5F5DC";
+		for(var i = 0; i < 11;i++){
+			let element = document.createElement("li");
+			element.style["margin-bottom","margin-top","margin-left","margin-right"] = "2px";
+			this.scoreTab.appendChild(element);
+		}
+		this.stage.appendChild(this.scoreTab);
 	}
 
 	//creating the player's blob
@@ -213,7 +233,7 @@ class MyView extends View {
 	//function which draws the other players blobs
 	drawOthers(){
 		for(let i=0;i<this.blobs.length;i++){
-			if(this.blobs[i].name!=this.mvc.model.name){
+			if(this.blobs[i].name!=this.mvc.model.name && this.blobs[i].isAlive == true){
 				this.ctx.beginPath();
 				this.ctx.fillStyle = "#FF4200";
 				this.ctx.ellipse(this.blobs[i].x,this.blobs[i].y, this.blobs[i].score,this.blobs[i].score, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
@@ -265,8 +285,25 @@ class MyView extends View {
 		this.interval= setInterval(function() {
 			_this.mvc.model.sendUpdatePositionMessage();
 			_this.drawGame();
+			_this.updateScore();
 			
 		},33);	
+	}
+
+	updateScore(){
+		let scoreliste = [];
+		scoreliste = this.blobs;
+		scoreliste.sort(function(a, b) {
+			return b.score - a.score ;
+		});
+		trace(scoreliste);
+		
+		for(let i = 0; i < scoreliste.length;i++){
+			if(scoreliste[i].name != "null"){
+				this.scoreTab.children[i].innerHTML =  parseInt(i + 1) + ". " + scoreliste[i].name + " " + scoreliste[i].score;
+			}
+			//this.scoreTab.appendChild(element);
+		}
 	}
 
 	mouseUpdate(event,canvas){
@@ -379,7 +416,7 @@ class MyController extends Controller {
 	//function which receive the world data from the server and save them into the view to be displayed
 	updateWorldData(data){
 		trace(data.blob.isAlive);
-		if(data.blob.isAlive===true){
+		if(data.blob.isAlive==true){
 		
 			this.mvc.model.blob.score = data.blob.score;
 			this.mvc.view.blobs=data.other_blobs;
@@ -390,7 +427,6 @@ class MyController extends Controller {
 			this.mvc.view.showStartWindow();
 		}
 	}
-
 
 	updateFoodData(data){
 		this.mvc.view.food = data.food;
