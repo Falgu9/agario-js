@@ -95,6 +95,8 @@ class MyModel extends Model {
 		this.io.on("foodupdate",packet =>this.mvc.controller.updateFoodData(packet));
 		this.io.on("disco",packet=>this.mvc.controller.updateOnDisc(packet));
 	}
+
+	//END OF MODEL CLASS
 }
 
 
@@ -152,8 +154,6 @@ class MyView extends View {
 				
 				this.ingame=0;
 				this.activate();
-				
-				
 	}
 
 	/**
@@ -481,4 +481,6 @@ class MyController extends Controller {
 	updateFoodData(data){
 		this.mvc.view.food = data.food;
 	}
+
+	//END OF CONTROLLER CLASS
 }
