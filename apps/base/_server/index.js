@@ -55,12 +55,22 @@ class Base extends ModuleBase {
 		let i=0;
 		let validate=1;
 		trace("Checking if name is available and valid.");
-		//let answer = ["hello", ...params, "welcome!"].join(" "); // say hello
-		for (let i=0;i<this.blobs.length;i++){
-			if((this.blobs[i].name==packet.value) && (this.blobs[i].isAlive==true)){
-				trace("name already taken or non-valid.")
+		let l = packet.value.length<6;
+		trace(l);
+
+		if(l==false){
+			validate=0;
+			trace("name already taken or non-valid.")
 				validate=0;
 				socket.emit("valid_name",{value: 0});
+		}
+		if(validate==1){
+			for (let i=0;i<this.blobs.length;i++){
+				if((this.blobs[i].name==packet.value) && (this.blobs[i].isAlive==true)){
+					trace("name already taken or non-valid.")
+					validate=0;
+					socket.emit("valid_name",{value: 0});
+				}
 			}
 		}
 		if(validate==1){

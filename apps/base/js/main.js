@@ -180,11 +180,9 @@ class MyView extends View {
 		this.mvc.model.blob.x= this.mvc.model.blob.x+this.cursor.x;
 		this.mvc.model.blob.y= this.mvc.model.blob.y+this.cursor.y;
 		this.activate();
-
 		this.colorOfBlob = '#' + (function co(lor){   return (lor +=
 			[0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'][Math.floor(Math.random()*16)])
 			&& (lor.length == 6) ?  lor : co(lor); })('');
-		trace(this.colorOfBlob);
 	}
 
 	/**
@@ -239,7 +237,7 @@ class MyView extends View {
 		for(let i=0;i<this.blobs.length;i++){
 			if(this.blobs[i].name!=this.mvc.model.name && this.blobs[i].isAlive == true){
 				this.ctx.beginPath();
-				this.ctx.fillStyle = "#FF4200";
+				this.ctx.fillStyle = "black";
 				this.ctx.ellipse(this.blobs[i].x,this.blobs[i].y, this.blobs[i].score,this.blobs[i].score, 45 * Math.PI/180, 0, 2 * Math.PI); // x, y, taille,taille
 				this.ctx.fill();
 				this.ctx.stroke();
@@ -304,7 +302,6 @@ class MyView extends View {
 		scoreliste.sort(function(a, b) {
 			return b.score - a.score;
 		});
-		trace(scoreliste);
 		for(let i=0; i < 10;i++){
 			this.scoreTab.children[i].innerHTML = "";
 		}
@@ -437,12 +434,13 @@ class MyController extends Controller {
 	valCon(packet){
 		//trace(packet);
 		if(packet.value==1){
-			trace("Name is fine,game is starting.");
+			//trace("Name is fine,game is starting.");
 			this.mvc.view.food = packet.food;
 			this.mvc.view.blobs = packet.others;
 			this.ioStartGame();
 		}else{
-			trace("Name not fine, try a new one.");
+			//trace("Name not fine, try a new one.");
+			alert("Your name is already taken or too long, only 6 characters maximum please");
 			this.mvc.view.cleanStage();
 			this.mvc.view.showStartWindow();
 		}
@@ -461,7 +459,7 @@ class MyController extends Controller {
 			this.mvc.model.blob.score = data.blob.score;
 			this.mvc.model.blob.name = data.blob.name;
 			this.mvc.view.blobs=data.other_blobs;
-			trace("you've been killed");
+			alert("You've been killed !");
 			clearInterval(this.mvc.view.interval);
 			this.mvc.view.cleanStage();
 			this.mvc.view.showStartWindow();
