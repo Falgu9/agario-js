@@ -2,25 +2,14 @@ const ModuleBase = load("com/base"); // import ModuleBase class
 
 class Base extends ModuleBase {
 
-	blobs= [];
-	food =[];
-	sockets = [];
-	foodGenerated = false;
+	blobs= []; // Is a table which contains all players 
+	food =[]; // Is a table which contains all food objects for the game
+	sockets = []; //Is a table which contains all sockets from clients
+	foodGenerated = false;// A boolean to know if food is generated or not
+
 	constructor(app, settings) {
 		super(app, new Map([["name", "baseapp"], ["io", true]]));
 	}
-
-	/**
-	 * @method connect : world
-	 * @param {*} req 
-	 * @param {*} res 
-	 * @param  {...*} params : some arguments
-	 */
-	/*connect(req, res, ... params) {
-		let answer = ["hello", ...params, "!"].join(" "); // say hello
-		trace(answer); // say it
-		this.sendJSON(req, res, 200, {message: answer}); // answer JSON
-	}*/
 
 
 	/**
@@ -38,8 +27,14 @@ class Base extends ModuleBase {
 		socket.on("con", packet => this._onPlayerConnectReq(socket, packet)); // listen to "dummy" messages
 		socket.on("validation",packet =>this._onValidate(socket,packet));
 		socket.on("update",packet=>this._onUpdate(socket,packet));
+		socket.on("disconnect",packet=>this._onIODisconnect(socket,packet));
 	}
 
+	/**
+	 * @method _onPlayerConnectReq : triggers when a client is connected
+	 * @param {*} socket
+	 * @param {*} packet
+	 */
 	_onPlayerConnectReq(socket, packet) { // dummy message received
 		trace("Connection request received.");
 		let blob = new Blob(socket.id,Math.floor(Math.random() *4000),Math.floor(Math.random() *4000),"null");
@@ -51,6 +46,11 @@ class Base extends ModuleBase {
 		socket.emit("con_re", {x: blob.x , y:blob.y, score:blob.score}); // answer dummy random message
 	}
 
+	/**
+	 * @method _onValidate : confirm if the player has entered an available name 
+	 * @param {*} socket 
+	 * @param {*} packet : packet.value is the name that the player has chosen 
+	 */
 	_onValidate(socket,packet){
 		let i=0;
 		let validate=1;
@@ -75,6 +75,11 @@ class Base extends ModuleBase {
 		}
 	}
 
+	/**
+	 * @method _onUpdate : triggers when an update message is sent by client and send them new datas
+	 * @param {*} socket
+	 * @param {*} packet  : it is a blob object sent by the client 
+	 */
 	_onUpdate(socket,packet){
 		let my_blob =null;
 		//trace(packet);
@@ -132,18 +137,30 @@ class Base extends ModuleBase {
 		}
 	}
 
+	/**
+	 * @method _onIODisconnect : triggered when the server receives a disconnect message from a client and update the data 
+	 * @param {*} socket
+	 */
 	_onIODisconnect(socket){
-		trace(socket.id);
-		trace(this.blobs);
+		let deletedBlob = null;
 		for(let i=0;i<this.blobs.length;i++){
-			
 			if(this.blobs[i].id==socket.id){
-				
+				deletedBlob = this.blobs[i];
 				this.blobs.splice(i,1);
+			}
+		}
+
+		for(let i=0;i<this.sockets.length;i++){
+			if(this.sockets[i].id==socket.id){
+				this.sockets.splice(i,1);
+			}else{
+				this.sockets[i].emit("disco",{other_blobs: this.blobs});
 			}
 		}
 		super._onIODisconnect(socket);
 	}
+
+	//END OF CLASS 
 }
 
 class Blob {
