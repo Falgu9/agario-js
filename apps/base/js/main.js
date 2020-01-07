@@ -259,8 +259,8 @@ class MyView extends View {
 		if(this.blobs.length>=2){
 			this.drawOthers();
 		}
-		this.mvc.model.blob.x += (this.cursor.x - windowWidth)/50;
-		this.mvc.model.blob.y += (this.cursor.y - windowHeight)/50;
+		this.mvc.model.blob.x += (this.cursor.x - windowWidth)/100;
+		this.mvc.model.blob.y += (this.cursor.y - windowHeight)/100;
 
 		if(this.mvc.model.blob.x>= 4000){
 			this.mvc.model.blob.x= 4000;
@@ -291,14 +291,15 @@ class MyView extends View {
 		let scoreliste = [];
 		scoreliste = this.blobs;
 		scoreliste.sort(function(a, b) {
-			return b.score - a.score;
+			return b.score - a.score ;
 		});
 		trace(scoreliste);
+		
 		for(let i = 0; i < scoreliste.length;i++){
-			this.scoreTab.children[i].innerHTML = "";
-			if(scoreliste[i].name != "null" && scoreliste[i].isAlive == true){
+			if(scoreliste[i].name != "null"){
 				this.scoreTab.children[i].innerHTML =  parseInt(i + 1) + ". " + scoreliste[i].name + " " + scoreliste[i].score;
 			}
+			//this.scoreTab.appendChild(element);
 		}
 	}
 
@@ -411,16 +412,12 @@ class MyController extends Controller {
 
 	//function which receive the world data from the server and save them into the view to be displayed
 	updateWorldData(data){
-		//trace(data.blob.isAlive);
+		trace(data.blob.isAlive);
 		if(data.blob.isAlive==true){
 		
 			this.mvc.model.blob.score = data.blob.score;
 			this.mvc.view.blobs=data.other_blobs;
 		}else{
-			this.mvc.model.blob.score = data.blob.score;
-			this.mvc.model.blob.name = data.blob.name;
-			this.mvc.view.blobs=data.other_blobs;
-			//trace(this.mvc.model.blob.name);
 			trace("you've been killed");
 			clearInterval(this.mvc.view.interval);
 			this.mvc.view.cleanStage();
