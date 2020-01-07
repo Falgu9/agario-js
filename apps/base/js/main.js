@@ -120,19 +120,26 @@ class MyView extends View {
 
 	initialize(mvc) {
 		super.initialize(mvc);
+
+		this.div = document.createElement("div");
+		this.div.style.position ="fixed";
+		this.div.style.height="100%";
+		this.div.style.width="100%";
+		this.div.style.top="50%";
+		this.div.style.textAlign="center";
+		this.stage.appendChild(this.div);
 		//create input for nickname
 		this.txt= document.createElement("input");
 		this.txt.setAttribute("type", "text");
 		this.txt.setAttribute("id" , "txt");
-		this.stage.appendChild(this.txt);
+		this.div.appendChild(this.txt);
 
 		// create get test btn
 		this.btn = document.createElement("button");
 		this.btn.setAttribute("id","btn");
 		this.btn.setAttribute("type", "button");
 		this.btn.innerHTML = 'Play !';
-		this.btn.style.float="left";
-		this.stage.appendChild(this.btn);
+		this.div.appendChild(this.btn);
 	}
 
 	/**
@@ -140,6 +147,13 @@ class MyView extends View {
 	 */
 	showStartWindow(){
 				//create input for nickname
+				this.div = document.createElement("div");
+				this.div.style.position ="fixed";
+				this.div.setAttribute("width",window.width);
+				this.div.setAttribute("height",window.height);
+				this.stage.appendChild(this.div);
+
+
 				this.txt= document.createElement("input");
 				this.txt.setAttribute("type", "text");
 				this.txt.setAttribute("id" , "txt");
