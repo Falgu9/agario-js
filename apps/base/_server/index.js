@@ -6,6 +6,8 @@ class Base extends ModuleBase {
 	food =[]; // Is a table which contains all food objects for the game
 	sockets = []; //Is a table which contains all sockets from clients
 	foodGenerated = false;// A boolean to know if food is generated or not
+	scoreMax = 300;
+	scoreMin = 20;
 
 	constructor(app, settings) {
 		super(app, new Map([["name", "baseapp"], ["io", true]]));
@@ -19,7 +21,7 @@ class Base extends ModuleBase {
 	_onIOConnect(socket) {
 		super._onIOConnect(socket); // do not remove super call
 		if(this.foodGenerated == false){
-			for(let i=0;i<300;i++){
+			for(let i=0;i<200;i++){
 				this.food.push(new Food(Math.floor(Math.random() *4000),Math.floor(Math.random() * 4000),10));
 			}
 			this.foodGenerated = true;
@@ -130,12 +132,25 @@ class Base extends ModuleBase {
 					var dy = this.blobs[i].y - this.food[j].y;
 					var distance = Math.sqrt(dx * dx + dy * dy);
 					if (distance < this.blobs[i].score + this.food[j].nourish){
-						this.blobs[i].score += this.food[j].nourish/5;
+						this.blobs[i].score += this.food[j].nourish/10;
 						this.food.splice(j,1);
 						this.food.push(new Food(Math.floor(Math.random() *4000),Math.floor(Math.random() * 4000),10));
 					}
 				}
 
+				if(this.blobs[i].score > this.scoreMax){
+					this.blobs[i].score = this.scoreMax - 2;
+				}
+				if(this.blobs[i].score < this.scoreMin){
+					this.blobs[i].score = this.scoreMin;
+				}
+
+				let deval = Math.floor(Math.random() *100);
+				if(deval <= 3 ){
+					if(this.blobs[i].score > 200){
+						this.blobs[i].score -= 2;
+					}
+				}
 				//tester si en vie 
 				//if scores == 0 it means the blob is dead
 				my_blob=this.blobs[i]; 
