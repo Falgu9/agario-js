@@ -139,15 +139,14 @@ class Base extends ModuleBase {
 				}
 
 				if(this.blobs[i].score > this.scoreMax){
-					this.blobs[i].score = this.scoreMax - 2;
+					this.blobs[i].score = this.scoreMax;
 				}
 				if(this.blobs[i].score < this.scoreMin){
 					this.blobs[i].score = this.scoreMin;
 				}
-
-				let deval = Math.floor(Math.random() *100);
-				if(deval <= 3 ){
-					if(this.blobs[i].score > 200){
+				if(this.blobs[i].score > 200){
+					let deval = Math.floor(Math.random() *100);
+					if(deval <= 2 ){
 						this.blobs[i].score -= 2;
 					}
 				}
